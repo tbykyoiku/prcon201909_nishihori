@@ -1,0 +1,137 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+<link href="style.css" rel="stylesheet" type="text/css">
+<title>お絵かき</title>
+
+<style>
+body {
+background: #eee;
+}
+#canvas {
+margin: 10px;
+background: #ffffff;
+border: 1px solid #aaaaaa;
+}
+input[type="image"]{
+padding: 2px;
+outline: none;
+}
+input[type="image"].active{
+background-color: #fff;
+}
+
+#container {
+	text-align: center;
+	width: 800px;
+	margin-right: auto;
+	margin-left: auto;
+	background-color: #FFFFFF;
+}
+
+</style>
+
+</head>
+<body>
+
+<div id="container">
+<h1>今日のお絵かきソフト</h1>
+
+<label>太さ<input id="width" type="number" min="1" max="30" value ="5"></label> <!-- 線の太さ-->
+<label>色<input id="color" type="color"></label> <!-- 色-->
+<input type="button" id="delete_canvas" value="クリア" onClick="delete_canvas()"> <!-- 全部消す-->
+<input type="button" id="save_canvas" value="保存" onClick="saveCanvas()"> <!--保存-->
+<canvas id="canvas" width="700" height="500"></canvas>
+</div>
+
+<script type="text/javascript">
+<!--変数定義-->
+var drawing = false;						<!--描写フラグ-->
+var bx = 0;
+var by = 0;
+
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+
+<!--マウス移動カーソル移動時処理-->
+canvas.addEventListener('mousemove', draw_canvas);
+
+<!--マウスクリック中処理-->
+canvas.addEventListener('mousedown', function(e) {		<!--function()に実際の描写処理-->
+drawing = true;							<!--描写フラグon-->
+var rect = e.target.getBoundingClientRect();			<!--対象の座標を取得-->
+bx = e.clientX - rect.left;
+by = e.clientY - rect.top;
+});
+
+<!--マウスクリック解除時処理-->
+canvas.addEventListener('mouseup', function() {
+drawing = false;						<!--描写フラグoff-->
+});
+
+<!--draw-->
+function draw_canvas(e) {
+	if (!drawing){
+		return
+	};
+	var rect = e.target.getBoundingClientRect();
+	var x = e.clientX - rect.left;
+	var y = e.clientY - rect.top;
+	var w = document.getElementById('width').value;		<!--太さの取得-->
+	var c = document.getElementById('color').value;		<!--色の取得-->
+	ctx.lineCap = 'round';
+	ctx.strokeStyle = c;
+	ctx.lineWidth = w;
+	ctx.beginPath();
+	ctx.moveTo(bx, by);
+	ctx.lineTo(x, y);
+	ctx.stroke();
+	ctx.closePath();
+	bx = x;
+	by = y;
+}
+
+function delete_canvas(){
+	ret = confirm('クリアしますか?');
+	if (ret == true){
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+	}
+}
+
+function saveCanvas(){
+	var fileName = "canvas.png";
+	var canvas = document.getElementById("canvas");
+	var base64 = canvas.toDataURL("image/png");
+	var blob = Base64toBlob(base64);
+	saveBlob(blob, fileName);
+}
+
+function Base64toBlob(base64){
+	var tmp = base64.split(',');
+	var data = atob(tmp[1]);
+	var mime = tmp[0].split(':')[1].split(';')[0];
+	var buf = new Uint8Array(data.length);
+	for (var i = 0; i < data.length; i++) {
+		buf[i] = data.charCodeAt(i);
+	}
+	var blob = new Blob([buf], { type: mime });
+	return blob;
+}
+
+function saveBlob(blob, fileName){
+    var url = (window.URL || window.webkitURL);
+    var dataUrl = url.createObjectURL(blob);
+    var event = document.createEvent("MouseEvents");
+    event.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+    var a = document.createElementNS("http://www.w3.org/1999/xhtml", "a");
+    a.href = dataUrl;
+    a.download = fileName;
+    a.dispatchEvent(event);
+}
+
+</script>
+
+</body>
+</html>
